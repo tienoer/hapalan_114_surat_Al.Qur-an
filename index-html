@@ -1,0 +1,1658 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hafalan 114 Surat Al-Qur'an - Belajar, Mendengarkan & Menghafal</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Google Fonts: Arabic (Amiri & Scheherazade New) and Indonesian (Plus Jakarta Sans) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Scheherazade+New:wght@400;600;700&display=swap" rel="stylesheet">
+  
+  <!-- React & ReactDOM CDN -->
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+  <!-- Babel for inline JSX processing -->
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Plus Jakarta Sans', 'sans-serif'],
+            arabic: ['Amiri', 'Scheherazade New', 'serif'],
+          },
+          colors: {
+            emerald: {
+              50: '#ecfdf5',
+              100: '#d1fae5',
+              600: '#059669',
+              700: '#047857',
+              800: '#065f46',
+              900: '#064e3b',
+              950: '#022c22',
+            },
+            gold: {
+              300: '#fde047',
+              400: '#facc15',
+              500: '#eab308',
+              600: '#d97706',
+              700: '#b45309',
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #f1f5f9;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #059669;
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #047857;
+    }
+
+    .arabic-text {
+      font-family: 'Amiri', 'Scheherazade New', serif;
+      direction: rtl;
+    }
+
+    /* Pattern Overlays */
+    .bg-islamic-pattern {
+      background-color: #064e3b;
+      background-image: radial-gradient(#10b981 0.75px, transparent 0.75px), radial-gradient(#10b981 0.75px, #064e3b 0.75px);
+      background-size: 30px 30px;
+      background-position: 0 0, 15px 15px;
+      opacity: 0.95;
+    }
+
+    /* Glow & Active highlight */
+    .active-ayah-card {
+      border-color: #d97706 !important;
+      box-shadow: 0 0 20px rgba(217, 119, 6, 0.25);
+      background-color: #fffbeb !important;
+    }
+
+    /* Text Blur for Memorization Mode */
+    .text-hidden-blur {
+      filter: blur(8px);
+      user-select: none;
+      transition: filter 0.3s ease;
+    }
+    .text-hidden-blur:hover {
+      filter: blur(4px);
+    }
+
+    /* Pulse animation for playing indicator */
+    @keyframes audioPulse {
+      0%, 100% { transform: scale(1); opacity: 0.8; }
+      50% { transform: scale(1.15); opacity: 1; }
+    }
+    .playing-pulse {
+      animation: audioPulse 1.5s infinite ease-in-out;
+    }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-800 antialiased font-sans min-h-screen flex flex-col">
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState, useEffect, useRef, useMemo } = React;
+
+    // --- LIST LENGKAP 114 SURAT AL-QUR'AN ---
+    const ALL_114_SURAHS = [
+      { number: 1, name: "الفاتحة", latin: "Al-Fatihah", translation: "Pembukaan", ayahCount: 7, type: "Makkiyah" },
+      { number: 2, name: "البقرة", latin: "Al-Baqarah", translation: "Sapi Betina", ayahCount: 286, type: "Madaniyah" },
+      { number: 3, name: "آل عمران", latin: "Ali 'Imran", translation: "Keluarga Imran", ayahCount: 200, type: "Madaniyah" },
+      { number: 4, name: "النساء", latin: "An-Nisa'", translation: "Wanita", ayahCount: 176, type: "Madaniyah" },
+      { number: 5, name: "المائدة", latin: "Al-Ma'idah", translation: "Hidangan", ayahCount: 120, type: "Madaniyah" },
+      { number: 6, name: "الأنعام", latin: "Al-An'am", translation: "Binatang Ternak", ayahCount: 165, type: "Makkiyah" },
+      { number: 7, name: "الأعراف", latin: "Al-A'raf", translation: "Tempat Tertinggi", ayahCount: 206, type: "Makkiyah" },
+      { number: 8, name: "الأنفال", latin: "Al-Anfal", translation: "Rampasan Perang", ayahCount: 75, type: "Madaniyah" },
+      { number: 9, name: "التوبة", latin: "At-Tawbah", translation: "Pengampunan", ayahCount: 129, type: "Madaniyah" },
+      { number: 10, name: "يونس", latin: "Yunus", translation: "Nabi Yunus", ayahCount: 109, type: "Makkiyah" },
+      { number: 11, name: "هود", latin: "Hud", translation: "Nabi Hud", ayahCount: 123, type: "Makkiyah" },
+      { number: 12, name: "يوسف", latin: "Yusuf", translation: "Nabi Yusuf", ayahCount: 111, type: "Makkiyah" },
+      { number: 13, name: "الرعد", latin: "Ar-Ra'd", translation: "Guruh", ayahCount: 43, type: "Madaniyah" },
+      { number: 14, name: "إبراهيم", latin: "Ibrahim", translation: "Nabi Ibrahim", ayahCount: 52, type: "Makkiyah" },
+      { number: 15, name: "الحجر", latin: "Al-Hijr", translation: "Gunung Batu", ayahCount: 99, type: "Makkiyah" },
+      { number: 16, name: "النحل", latin: "An-Nahl", translation: "Lebah", ayahCount: 128, type: "Makkiyah" },
+      { number: 17, name: "الإسراء", latin: "Al-Isra'", translation: "Perjalanan Malam", ayahCount: 111, type: "Makkiyah" },
+      { number: 18, name: "الكهف", latin: "Al-Kahf", translation: "Gua", ayahCount: 110, type: "Makkiyah" },
+      { number: 19, name: "مريم", latin: "Maryam", translation: "Maryam", ayahCount: 98, type: "Makkiyah" },
+      { number: 20, name: "طه", latin: "Taha", translation: "Taha", ayahCount: 135, type: "Makkiyah" },
+      { number: 21, name: "الأنبياء", latin: "Al-Anbiya'", translation: "Nabi-Nabi", ayahCount: 112, type: "Makkiyah" },
+      { number: 22, name: "الحج", latin: "Al-Hajj", translation: "Haji", ayahCount: 78, type: "Madaniyah" },
+      { number: 23, name: "المؤمنون", latin: "Al-Mu'minun", translation: "Orang-Orang Mukmin", ayahCount: 118, type: "Makkiyah" },
+      { number: 24, name: "النور", latin: "An-Nur", translation: "Cahaya", ayahCount: 64, type: "Madaniyah" },
+      { number: 25, name: "الفرقان", latin: "Al-Furqan", translation: "Pembeda", ayahCount: 77, type: "Makkiyah" },
+      { number: 26, name: "الشعراء", latin: "Asy-Syu'ara'", translation: "Penyair", ayahCount: 227, type: "Makkiyah" },
+      { number: 27, name: "النمل", latin: "An-Naml", translation: "Semut", ayahCount: 93, type: "Makkiyah" },
+      { number: 28, name: "القصص", latin: "Al-Qasas", translation: "Kisah-Kisah", ayahCount: 88, type: "Makkiyah" },
+      { number: 29, name: "العنكبوت", latin: "Al-'Ankabut", translation: "Laba-Laba", ayahCount: 69, type: "Makkiyah" },
+      { number: 30, name: "الروم", latin: "Ar-Rum", translation: "Bangsa Romawi", ayahCount: 60, type: "Makkiyah" },
+      { number: 31, name: "لقمان", latin: "Luqman", translation: "Keluarga Luqman", ayahCount: 34, type: "Makkiyah" },
+      { number: 32, name: "السجدة", latin: "As-Sajdah", translation: "Sujud", ayahCount: 30, type: "Makkiyah" },
+      { number: 33, name: "الأحزاب", latin: "Al-Ahzab", translation: "Golongan Bersekutu", ayahCount: 73, type: "Madaniyah" },
+      { number: 34, name: "سبأ", latin: "Saba'", translation: "Kaum Saba'", ayahCount: 54, type: "Makkiyah" },
+      { number: 35, name: "فاطر", latin: "Fatir", translation: "Pencipta", ayahCount: 45, type: "Makkiyah" },
+      { number: 36, name: "يس", latin: "Yasin", translation: "Yasin", ayahCount: 83, type: "Makkiyah" },
+      { number: 37, name: "الصافات", latin: "As-Saffat", translation: "Yang Bershaf-Shaf", ayahCount: 182, type: "Makkiyah" },
+      { number: 38, name: "ص", latin: "Sad", translation: "Sad", ayahCount: 88, type: "Makkiyah" },
+      { number: 39, name: "الزمر", latin: "Az-Zumar", translation: "Rombongan", ayahCount: 75, type: "Makkiyah" },
+      { number: 40, name: "غافر", latin: "Ghafir", translation: "Maha Pengampun", ayahCount: 85, type: "Makkiyah" },
+      { number: 41, name: "فصلت", latin: "Fussilat", translation: "Yang Dijelaskan", ayahCount: 54, type: "Makkiyah" },
+      { number: 42, name: "الشورى", latin: "Asy-Syura", translation: "Musyawarah", ayahCount: 53, type: "Makkiyah" },
+      { number: 43, name: "الزخرف", latin: "Az-Zukhruf", translation: "Perhiasan", ayahCount: 89, type: "Makkiyah" },
+      { number: 44, name: "الدخان", latin: "Ad-Dukhan", translation: "Kabut", ayahCount: 59, type: "Makkiyah" },
+      { number: 45, name: "الجاثية", latin: "Al-Jasiyah", translation: "Yang Bertekuk Lutut", ayahCount: 37, type: "Makkiyah" },
+      { number: 46, name: "الأحقاف", latin: "Al-Ahqaf", translation: "Bukit-Bukit Pasir", ayahCount: 35, type: "Makkiyah" },
+      { number: 47, name: "محمد", latin: "Muhammad", translation: "Nabi Muhammad", ayahCount: 38, type: "Madaniyah" },
+      { number: 48, name: "الفتح", latin: "Al-Fath", translation: "Kemenangan", ayahCount: 29, type: "Madaniyah" },
+      { number: 49, name: "الحجرات", latin: "Al-Hujurat", translation: "Kamar-Kamar", ayahCount: 18, type: "Madaniyah" },
+      { number: 50, name: "ق", latin: "Qaf", translation: "Qaf", ayahCount: 45, type: "Makkiyah" },
+      { number: 51, name: "الذاريات", latin: "Az-Zariyat", translation: "Angin Yang Menerbangkan", ayahCount: 60, type: "Makkiyah" },
+      { number: 52, name: "الطور", latin: "At-Tur", translation: "Bukit Tursina", ayahCount: 49, type: "Makkiyah" },
+      { number: 53, name: "النجم", latin: "An-Najm", translation: "Bintang", ayahCount: 62, type: "Makkiyah" },
+      { number: 54, name: "القمر", latin: "Al-Qamar", translation: "Bulan", ayahCount: 55, type: "Makkiyah" },
+      { number: 55, name: "الرحمن", latin: "Ar-Rahman", translation: "Yang Maha Pemurah", ayahCount: 78, type: "Madaniyah" },
+      { number: 56, name: "الواقعة", latin: "Al-Waqi'ah", translation: "Hari Kiamat", ayahCount: 96, type: "Makkiyah" },
+      { number: 57, name: "الحديد", latin: "Al-Hadid", translation: "Besi", ayahCount: 29, type: "Madaniyah" },
+      { number: 58, name: "المجادلة", latin: "Al-Mujadilah", translation: "Gugatan", ayahCount: 22, type: "Madaniyah" },
+      { number: 59, name: "الحشر", latin: "Al-Hasyr", translation: "Pengusiran", ayahCount: 24, type: "Madaniyah" },
+      { number: 60, name: "الممتحنة", latin: "Al-Mumtahanah", translation: "Wanita Yang Diuji", ayahCount: 13, type: "Madaniyah" },
+      { number: 61, name: "الصف", latin: "As-Saff", translation: "Barisan", ayahCount: 14, type: "Madaniyah" },
+      { number: 62, name: "الجمعة", latin: "Al-Jumu'ah", translation: "Hari Jum'at", ayahCount: 11, type: "Madaniyah" },
+      { number: 63, name: "المنافقون", latin: "Al-Munafiqun", translation: "Orang-Orang Munafik", ayahCount: 11, type: "Madaniyah" },
+      { number: 64, name: "التغابن", latin: "At-Taghabun", translation: "Hari Dinampakkan Kesalahan", ayahCount: 18, type: "Madaniyah" },
+      { number: 65, name: "الطلاق", latin: "At-Talaq", translation: "Talak", ayahCount: 12, type: "Madaniyah" },
+      { number: 66, name: "التحريم", latin: "At-Tahrim", translation: "Mengharamkan", ayahCount: 12, type: "Madaniyah" },
+      { number: 67, name: "الملك", latin: "Al-Mulk", translation: "Kerajaan", ayahCount: 30, type: "Makkiyah" },
+      { number: 68, name: "القلم", latin: "Al-Qalam", translation: "Pena", ayahCount: 52, type: "Makkiyah" },
+      { number: 69, name: "الحاقة", latin: "Al-Haqqah", translation: "Hari Kiamat", ayahCount: 52, type: "Makkiyah" },
+      { number: 70, name: "المعارج", latin: "Al-Ma'arij", translation: "Tempat Naik", ayahCount: 44, type: "Makkiyah" },
+      { number: 71, name: "نوح", latin: "Nuh", translation: "Nabi Nuh", ayahCount: 28, type: "Makkiyah" },
+      { number: 72, name: "الجن", latin: "Al-Jinn", translation: "Jin", ayahCount: 28, type: "Makkiyah" },
+      { number: 73, name: "المزمل", latin: "Al-Muzzammil", translation: "Orang Yang Berselimut", ayahCount: 20, type: "Makkiyah" },
+      { number: 74, name: "المدثر", latin: "Al-Muddassir", translation: "Orang Yang Berkemul", ayahCount: 56, type: "Makkiyah" },
+      { number: 75, name: "القيامة", latin: "Al-Qiyamah", translation: "Hari Kiamat", ayahCount: 40, type: "Makkiyah" },
+      { number: 76, name: "الإنسان", latin: "Al-Insan", translation: "Manusia", ayahCount: 31, type: "Madaniyah" },
+      { number: 77, name: "المرسلات", latin: "Al-Mursalat", translation: "Malaikat-Malaikat Yang Diutus", ayahCount: 50, type: "Makkiyah" },
+      { number: 78, name: "النبأ", latin: "An-Naba'", translation: "Berita Besar", ayahCount: 40, type: "Makkiyah" },
+      { number: 79, name: "النازعات", latin: "An-Nazi'at", translation: "Malaikat Yang Mencabut", ayahCount: 46, type: "Makkiyah" },
+      { number: 80, name: "عبس", latin: "'Abasa", translation: "Ia Bermuka Masam", ayahCount: 42, type: "Makkiyah" },
+      { number: 81, name: "التكوير", latin: "At-Takwir", translation: "Menggulung", ayahCount: 29, type: "Makkiyah" },
+      { number: 82, name: "الانفطار", latin: "Al-Infitar", translation: "Terbelah", ayahCount: 19, type: "Makkiyah" },
+      { number: 83, name: "المطففين", latin: "Al-Mutaffifin", translation: "Orang-Orang Curang", ayahCount: 36, type: "Makkiyah" },
+      { number: 84, name: "الانشقاق", latin: "Al-Insyiqaq", translation: "Terbelah", ayahCount: 25, type: "Makkiyah" },
+      { number: 85, name: "البروج", latin: "Al-Buruj", translation: "Gugusan Bintang", ayahCount: 22, type: "Makkiyah" },
+      { number: 86, name: "الطارق", latin: "At-Tariq", translation: "Yang Datang Di Malam Hari", ayahCount: 17, type: "Makkiyah" },
+      { number: 87, name: "الأعلى", latin: "Al-A'la", translation: "Yang Maha Tinggi", ayahCount: 19, type: "Makkiyah" },
+      { number: 88, name: "الغاشية", latin: "Al-Ghasyiyah", translation: "Hari Pembalasan", ayahCount: 26, type: "Makkiyah" },
+      { number: 89, name: "الفجر", latin: "Al-Fajr", translation: "Fajar", ayahCount: 30, type: "Makkiyah" },
+      { number: 90, name: "البلد", latin: "Al-Balad", translation: "Negeri", ayahCount: 20, type: "Makkiyah" },
+      { number: 91, name: "الشمس", latin: "Asy-Syams", translation: "Matahari", ayahCount: 15, type: "Makkiyah" },
+      { number: 92, name: "الليل", latin: "Al-Lail", translation: "Malam", ayahCount: 21, type: "Makkiyah" },
+      { number: 93, name: "الضحى", latin: "Ad-Duha", translation: "Waktu Dhuha", ayahCount: 11, type: "Makkiyah" },
+      { number: 94, name: "الشرح", latin: "Al-Insyirah", translation: "Kelapangan", ayahCount: 8, type: "Makkiyah" },
+      { number: 95, name: "التين", latin: "At-Tin", translation: "Buah Tin", ayahCount: 8, type: "Makkiyah" },
+      { number: 96, name: "العلق", latin: "Al-'Alaq", translation: "Segumpal Darah", ayahCount: 19, type: "Makkiyah" },
+      { number: 97, name: "القدر", latin: "Al-Qadr", translation: "Kemuliaan", ayahCount: 5, type: "Makkiyah" },
+      { number: 98, name: "البينة", latin: "Al-Bayyinah", translation: "Bukti Yang Nyata", ayahCount: 8, type: "Madaniyah" },
+      { number: 99, name: "الزلزلة", latin: "Az-Zalzalah", translation: "Kegoncangan", ayahCount: 8, type: "Madaniyah" },
+      { number: 100, name: "العاديات", latin: "Al-'Adiyat", translation: "Kuda Perang Kencang", ayahCount: 11, type: "Makkiyah" },
+      { number: 101, name: "القارعة", latin: "Al-Qari'ah", translation: "Hari Kiamat", ayahCount: 11, type: "Makkiyah" },
+      { number: 102, name: "التكاثر", latin: "At-Takasur", translation: "Bermegah-Megahan", ayahCount: 8, type: "Makkiyah" },
+      { number: 103, name: "العصر", latin: "Al-'Asr", translation: "Masa/Waktu", ayahCount: 3, type: "Makkiyah" },
+      { number: 104, name: "الهمزة", latin: "Al-Humazah", translation: "Pengumpat", ayahCount: 9, type: "Makkiyah" },
+      { number: 105, name: "الفيل", latin: "Al-Fil", translation: "Gajah", ayahCount: 5, type: "Makkiyah" },
+      { number: 106, name: "قريش", latin: "Quraisy", translation: "Suku Quraisy", ayahCount: 4, type: "Makkiyah" },
+      { number: 107, name: "المواعون", latin: "Al-Ma'un", translation: "Barang-Barang Berguna", ayahCount: 7, type: "Makkiyah" },
+      { number: 108, name: "الكوثر", latin: "Al-Kausar", translation: "Nikmat Yang Banyak", ayahCount: 3, type: "Makkiyah" },
+      { number: 109, name: "الكافرون", latin: "Al-Kafirun", translation: "Orang-Orang Kafir", ayahCount: 6, type: "Makkiyah" },
+      { number: 110, name: "النصر", latin: "An-Nasr", translation: "Pertolongan", ayahCount: 3, type: "Madaniyah" },
+      { number: 111, name: "المسد", latin: "Al-Lahab", translation: "Gejolak Api", ayahCount: 5, type: "Makkiyah" },
+      { number: 112, name: "الإخلاص", latin: "Al-Ikhlas", translation: "Ikhlas", ayahCount: 4, type: "Makkiyah" },
+      { number: 113, name: "الفلق", latin: "Al-Falaq", translation: "Waktu Subuh", ayahCount: 5, type: "Makkiyah" },
+      { number: 114, name: "الناس", latin: "An-Nas", translation: "Manusia", ayahCount: 6, type: "Makkiyah" }
+    ];
+
+    // Reciters list available in AlQuran Cloud API
+    const RECITERS = [
+      { id: 'ar.alafasy', name: 'Syaikh Mishary Rashid Alafasy' },
+      { id: 'ar.abdulbasitmurattal', name: 'Syaikh Abdul Basit Abdul Samad' },
+      { id: 'ar.minshawi', name: 'Syaikh Mohamed Siddiq El-Minshawi' },
+      { id: 'ar.abdullahbasfar', name: 'Syaikh Abdullah Basfar' }
+    ];
+
+    function App() {
+      // --- STATE & REF ---
+      const [view, setView] = useState('list'); // 'list' | 'workbench' | 'progress'
+      const [searchQuery, setSearchQuery] = useState('');
+      const [filterCategory, setFilterCategory] = useState('all'); // 'all' | 'makkiyah' | 'madaniyah' | 'juz30' | 'completed'
+
+      // Selected Surah & Verses Data
+      const [selectedSurah, setSelectedSurah] = useState(null);
+      const [verses, setVerses] = useState([]);
+      const [loadingVerses, setLoadingVerses] = useState(false);
+      const [fetchError, setFetchError] = useState(null);
+      const [reciter, setReciter] = useState('ar.alafasy');
+
+      // Audio Player State
+      const [isPlaying, setIsPlaying] = useState(false);
+      const [currentAyahIndex, setCurrentAyahIndex] = useState(0);
+      const [repeatTarget, setRepeatTarget] = useState(1); // 1, 3, 5, 10, Infinity
+      const [currentRepeatCount, setCurrentRepeatCount] = useState(1);
+      const [playbackSpeed, setPlaybackSpeed] = useState(1);
+      const [volume, setVolume] = useState(1);
+      const [isMuted, setIsMuted] = useState(false);
+      const [currentTime, setCurrentTime] = useState(0);
+      const [duration, setDuration] = useState(0);
+
+      // Hafalan Modes State
+      const [mode, setMode] = useState('dengarkan'); // 'dengarkan' | 'tirukan' | 'hafalan' | 'sambung'
+      const [hideArabicText, setHideArabicText] = useState(false);
+      const [hideTranslationText, setHideTranslationText] = useState(false);
+      const [revealedAyahs, setRevealedAyahs] = useState({});
+      const [fontSize, setFontSize] = useState('lg'); // 'md', 'lg', 'xl', '2xl'
+
+      // Repeat Recitation Countdown State (Mode Tirukan)
+      const [isPauseCountdown, setIsPauseCountdown] = useState(false);
+      const [countdownSeconds, setCountdownSeconds] = useState(0);
+      const countdownTimerRef = useRef(null);
+
+      // Quiz State (Sambung Ayat Mode)
+      const [quizIndex, setQuizIndex] = useState(0);
+      const [quizOptions, setQuizOptions] = useState([]);
+      const [quizScore, setQuizScore] = useState(0);
+      const [quizAnswerFeedback, setQuizAnswerFeedback] = useState(null); // 'correct' | 'wrong'
+
+      // LocalStorage for Memorization Progress: { [surahNum]: [array of memorized ayah numbers] }
+      const [memorizedData, setMemorizedData] = useState(() => {
+        try {
+          const saved = localStorage.getItem('quran_hafalan_progress');
+          return saved ? JSON.parse(saved) : {};
+        } catch (e) {
+          return {};
+        }
+      });
+
+      const audioRef = useRef(new Audio());
+
+      // Save to localStorage whenever memorizedData updates
+      useEffect(() => {
+        try {
+          localStorage.setItem('quran_hafalan_progress', JSON.stringify(memorizedData));
+        } catch (e) {
+          console.error("Gagal menyimpan progres ke localStorage", e);
+        }
+      }, [memorizedData]);
+
+      // Handle Audio Event Listeners
+      useEffect(() => {
+        const audio = audioRef.current;
+
+        const handleTimeUpdate = () => {
+          setCurrentTime(audio.currentTime);
+          setDuration(audio.duration || 0);
+        };
+
+        const handleEnded = () => {
+          // Check repeat count requirement
+          if (currentRepeatCount < repeatTarget) {
+            setCurrentRepeatCount(prev => prev + 1);
+            audio.currentTime = 0;
+            audio.play().catch(err => console.error(err));
+          } else {
+            // Reached repeat target for this verse
+            setCurrentRepeatCount(1);
+            
+            // Check study mode
+            if (mode === 'tirukan') {
+              // Pause and countdown for user recitation
+              const silenceDuration = Math.max(4, Math.round(audio.duration || 5));
+              startRecitationCountdown(silenceDuration);
+            } else {
+              // Advance to next verse
+              advanceToNextAyah();
+            }
+          }
+        };
+
+        const handleError = (e) => {
+          console.error("Audio error:", e);
+          setIsPlaying(false);
+          setFetchError("Audio gagal diputar dari server. Menggunakan jalur cadangan...");
+          // Try fallback URL if available
+          if (verses.length > 0 && verses[currentAyahIndex]) {
+            const fallbackUrl = `https://cdn.islamic.network/quran/audio/128/${reciter}/${verses[currentAyahIndex].globalNumber}.mp3`;
+            if (audio.src !== fallbackUrl) {
+              audio.src = fallbackUrl;
+              audio.play().then(() => {
+                setIsPlaying(true);
+                setFetchError(null);
+              }).catch(() => {
+                setFetchError("Audio gagal diputar. Periksa koneksi internet Anda.");
+              });
+            }
+          }
+        };
+
+        audio.addEventListener('timeupdate', handleTimeUpdate);
+        audio.addEventListener('ended', handleEnded);
+        audio.addEventListener('error', handleError);
+
+        return () => {
+          audio.removeEventListener('timeupdate', handleTimeUpdate);
+          audio.removeEventListener('ended', handleEnded);
+          audio.removeEventListener('error', handleError);
+        };
+      }, [currentRepeatCount, repeatTarget, mode, currentAyahIndex, verses, reciter]);
+
+      // Apply Volume & Playback Rate
+      useEffect(() => {
+        if (audioRef.current) {
+          audioRef.current.volume = isMuted ? 0 : volume;
+          audioRef.current.playbackRate = playbackSpeed;
+        }
+      }, [volume, isMuted, playbackSpeed]);
+
+      // Timer helper for Mode Tirukan
+      const startRecitationCountdown = (seconds) => {
+        setIsPauseCountdown(true);
+        setCountdownSeconds(seconds);
+        
+        if (countdownTimerRef.current) clearInterval(countdownTimerRef.current);
+
+        countdownTimerRef.current = setInterval(() => {
+          setCountdownSeconds(prev => {
+            if (prev <= 1) {
+              clearInterval(countdownTimerRef.current);
+              setIsPauseCountdown(false);
+              advanceToNextAyah();
+              return 0;
+            }
+            return prev - 1;
+          });
+        }, 1000);
+      };
+
+      const advanceToNextAyah = () => {
+        if (currentAyahIndex < verses.length - 1) {
+          const nextIdx = currentAyahIndex + 1;
+          setCurrentAyahIndex(nextIdx);
+          playAyah(nextIdx);
+        } else {
+          // Reached end of surah
+          setIsPlaying(false);
+          setCurrentAyahIndex(0);
+        }
+      };
+
+      // Fetch Verses & Audio for selected surah
+      const loadSurah = async (surah) => {
+        setSelectedSurah(surah);
+        setView('workbench');
+        setLoadingVerses(true);
+        setFetchError(null);
+        setVerses([]);
+        setCurrentAyahIndex(0);
+        setIsPlaying(false);
+        setRevealedAyahs({});
+        audioRef.current.pause();
+
+        try {
+          // Fetch Arabic text + audio, and Indonesian translation
+          const res = await fetch(`https://api.alquran.cloud/v1/surah/${surah.number}/editions/${reciter},id.indonesian`);
+          const json = await res.json();
+
+          if (json.code === 200 && json.data && json.data.length >= 2) {
+            const arEdition = json.data[0];
+            const idEdition = json.data[1];
+
+            const formattedVerses = arEdition.ayahs.map((ayah, idx) => ({
+              numberInSurah: ayah.numberInSurah,
+              globalNumber: ayah.number,
+              text: ayah.text,
+              audio: ayah.audio || `https://cdn.islamic.network/quran/audio/128/${reciter}/${ayah.number}.mp3`,
+              translation: idEdition.ayahs[idx] ? idEdition.ayahs[idx].text : ''
+            }));
+
+            setVerses(formattedVerses);
+            setupQuizMode(formattedVerses);
+          } else {
+            throw new Error("Gagal mengambil data dari server API Al-Qur'an.");
+          }
+        } catch (err) {
+          console.error("Error fetching surah:", err);
+          setFetchError("Gagal memuat ayat dan suara Al-Qur'an. Silakan coba lagi.");
+        } finally {
+          setLoadingVerses(false);
+        }
+      };
+
+      // Change Reciter and re-fetch audio URLs if needed
+      const handleReciterChange = async (newReciter) => {
+        setReciter(newReciter);
+        if (selectedSurah) {
+          const wasPlaying = isPlaying;
+          audioRef.current.pause();
+          setIsPlaying(false);
+          
+          setLoadingVerses(true);
+          try {
+            const res = await fetch(`https://api.alquran.cloud/v1/surah/${selectedSurah.number}/editions/${newReciter},id.indonesian`);
+            const json = await res.json();
+            if (json.code === 200) {
+              const arEdition = json.data[0];
+              setVerses(prevVerses => prevVerses.map((v, i) => ({
+                ...v,
+                audio: arEdition.ayahs[i].audio || `https://cdn.islamic.network/quran/audio/128/${newReciter}/${v.globalNumber}.mp3`
+              })));
+            }
+          } catch (e) {
+            console.error(e);
+          } finally {
+            setLoadingVerses(false);
+          }
+        }
+      };
+
+      // Play specific verse
+      const playAyah = (index) => {
+        if (!verses || verses.length === 0 || !verses[index]) return;
+        
+        if (countdownTimerRef.current) clearInterval(countdownTimerRef.current);
+        setIsPauseCountdown(false);
+
+        setCurrentAyahIndex(index);
+        const ayah = verses[index];
+        audioRef.current.src = ayah.audio;
+        audioRef.current.currentTime = 0;
+        audioRef.current.playbackRate = playbackSpeed;
+        audioRef.current.volume = isMuted ? 0 : volume;
+
+        audioRef.current.play()
+          .then(() => {
+            setIsPlaying(true);
+            setFetchError(null);
+            // Scroll ayah card into view smoothly
+            const el = document.getElementById(`ayah-card-${index}`);
+            if (el) {
+              el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+          })
+          .catch(err => {
+            console.error("Gagal memutar audio:", err);
+            setIsPlaying(false);
+            setFetchError("Audio gagal dimuat. Mengecek jalur cadangan...");
+            // Retry fallback URL
+            const fallbackUrl = `https://cdn.islamic.network/quran/audio/128/${reciter}/${ayah.globalNumber}.mp3`;
+            audioRef.current.src = fallbackUrl;
+            audioRef.current.play().then(() => setIsPlaying(true)).catch(e => {
+              setFetchError("Audio tidak dapat diputar. Periksa koneksi internet.");
+            });
+          });
+      };
+
+      const togglePlayPause = () => {
+        if (isPlaying) {
+          audioRef.current.pause();
+          setIsPlaying(false);
+          if (countdownTimerRef.current) clearInterval(countdownTimerRef.current);
+          setIsPauseCountdown(false);
+        } else {
+          if (verses.length > 0) {
+            playAyah(currentAyahIndex);
+          }
+        }
+      };
+
+      const stopAudio = () => {
+        audioRef.current.pause();
+        audioRef.current.currentTime = 0;
+        setIsPlaying(false);
+        setCurrentAyahIndex(0);
+        setCurrentRepeatCount(1);
+        if (countdownTimerRef.current) clearInterval(countdownTimerRef.current);
+        setIsPauseCountdown(false);
+      };
+
+      // Quiz mode setup
+      const setupQuizMode = (vList) => {
+        if (!vList || vList.length < 2) return;
+        const qIdx = Math.floor(Math.random() * (vList.length - 1));
+        setQuizIndex(qIdx);
+        setQuizAnswerFeedback(null);
+
+        const correctNextAyah = vList[qIdx + 1];
+        let choices = [correctNextAyah];
+
+        // Pick 2 or 3 random wrong options
+        while (choices.length < Math.min(3, vList.length)) {
+          const randIdx = Math.floor(Math.random() * vList.length);
+          if (randIdx !== qIdx + 1 && !choices.includes(vList[randIdx])) {
+            choices.push(vList[randIdx]);
+          }
+        }
+
+        // Shuffle choices
+        choices.sort(() => Math.random() - 0.5);
+        setQuizOptions(choices);
+      };
+
+      const handleAnswerQuiz = (selectedAyah) => {
+        const correctNext = verses[quizIndex + 1];
+        if (selectedAyah.numberInSurah === correctNext.numberInSurah) {
+          setQuizAnswerFeedback('correct');
+          setQuizScore(prev => prev + 10);
+          setTimeout(() => {
+            setupQuizMode(verses);
+          }, 1800);
+        } else {
+          setQuizAnswerFeedback('wrong');
+        }
+      };
+
+      // Toggle verse memorized state
+      const toggleAyahMemorized = (surahNum, ayahNum) => {
+        setMemorizedData(prev => {
+          const currentList = prev[surahNum] || [];
+          const exists = currentList.includes(ayahNum);
+          const updated = exists 
+            ? currentList.filter(n => n !== ayahNum)
+            : [...currentList, ayahNum];
+          
+          return {
+            ...prev,
+            [surahNum]: updated
+          };
+        });
+      };
+
+      const toggleMarkAllSurahMemorized = (surahNum, totalAyahs) => {
+        setMemorizedData(prev => {
+          const currentList = prev[surahNum] || [];
+          const isAllHafal = currentList.length === totalAyahs;
+
+          return {
+            ...prev,
+            [surahNum]: isAllHafal ? [] : Array.from({ length: totalAyahs }, (_, i) => i + 1)
+          };
+        });
+      };
+
+      // Calculate Progress Stats
+      const stats = useMemo(() => {
+        let totalMemorizedVerses = 0;
+        let completedSurahCount = 0;
+
+        ALL_114_SURAHS.forEach(s => {
+          const memorizedList = memorizedData[s.number] || [];
+          totalMemorizedVerses += memorizedList.length;
+          if (memorizedList.length === s.ayahCount) {
+            completedSurahCount++;
+          }
+        });
+
+        const totalQuranVerses = 6236;
+        const percentage = ((totalMemorizedVerses / totalQuranVerses) * 100).toFixed(1);
+
+        return {
+          totalMemorizedVerses,
+          completedSurahCount,
+          percentage,
+          totalQuranVerses
+        };
+      }, [memorizedData]);
+
+      // Filter Surahs
+      const filteredSurahs = useMemo(() => {
+        return ALL_114_SURAHS.filter(s => {
+          const matchSearch = s.latin.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                              s.translation.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                              s.number.toString() === searchQuery.trim();
+
+          if (!matchSearch) return false;
+
+          if (filterCategory === 'makkiyah') return s.type === 'Makkiyah';
+          if (filterCategory === 'madaniyah') return s.type === 'Madaniyah';
+          if (filterCategory === 'juz30') return s.number >= 78;
+          if (filterCategory === 'completed') {
+            const list = memorizedData[s.number] || [];
+            return list.length === s.ayahCount;
+          }
+
+          return true;
+        });
+      }, [searchQuery, filterCategory, memorizedData]);
+
+      return (
+        <div className="flex flex-col min-h-screen">
+          {/* HEADER / NAVBAR */}
+          <header className="bg-islamic-pattern text-white shadow-xl sticky top-0 z-40">
+            <div className="max-w-7xl mx-auto px-4 py-4 flex flex-col md:flex-row items-center justify-between gap-4">
+              
+              {/* Logo & App Title */}
+              <div 
+                className="flex items-center gap-3 cursor-pointer group"
+                onClick={() => { setView('list'); stopAudio(); }}
+              >
+                <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-gold-500 to-amber-300 p-0.5 shadow-lg group-hover:scale-105 transition-transform flex items-center justify-center">
+                  <div className="w-full h-full bg-white rounded-[14px] flex items-center justify-center overflow-hidden p-0.5">
+                    <img 
+                      src="https://iili.io/nokHlP1.png" 
+                      alt="Logo SDN 3 Bangunharja" 
+                      className="w-full h-full object-contain" 
+                      onError={(e)=>{ e.target.onerror=null; e.target.src='https://placehold.co/100x100/064e3b/facc15?text=SDN3'; }} 
+                    />
+                  </div>
+                </div>
+                <div>
+                  <h1 className="text-lg md:text-xl font-bold tracking-wide text-gold-300 flex items-center gap-2">
+                    HAFALAN 114 SURAT AL-QUR'AN
+                  </h1>
+                  <p className="text-xs text-emerald-100/80 font-medium">SDN 3 BANGUNHARJA • Belajar, Mendengarkan, & Menghafal</p>
+                </div>
+              </div>
+
+              {/* Navigation Actions */}
+              <div className="flex items-center gap-2 w-full md:w-auto justify-center">
+                <button
+                  onClick={() => { setView('list'); }}
+                  className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all flex items-center gap-2 ${
+                    view === 'list'
+                      ? 'bg-gold-500 text-slate-900 shadow-md scale-105'
+                      : 'bg-emerald-800/80 text-emerald-100 hover:bg-emerald-700'
+                  }`}
+                >
+                  <span>🕌</span> 114 Surat
+                </button>
+
+                {selectedSurah && (
+                  <button
+                    onClick={() => setView('workbench')}
+                    className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all flex items-center gap-2 ${
+                      view === 'workbench'
+                        ? 'bg-gold-500 text-slate-900 shadow-md scale-105'
+                        : 'bg-emerald-800/80 text-emerald-100 hover:bg-emerald-700'
+                    }`}
+                  >
+                    <span>📖</span> Hafalan: {selectedSurah.latin}
+                  </button>
+                )}
+
+                <button
+                  onClick={() => setView('progress')}
+                  className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all flex items-center gap-2 ${
+                    view === 'progress'
+                      ? 'bg-gold-500 text-slate-900 shadow-md scale-105'
+                      : 'bg-emerald-800/80 text-emerald-100 hover:bg-emerald-700'
+                  }`}
+                >
+                  <span>🏆</span> Progres ({stats.completedSurahCount}/114)
+                </button>
+              </div>
+
+            </div>
+          </header>
+
+          {/* MAIN CONTENT AREA */}
+          <main className="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 mb-28">
+
+            {/* ERROR NOTIFICATION BANNER */}
+            {fetchError && (
+              <div className="mb-6 p-4 rounded-2xl bg-rose-50 border border-rose-200 text-rose-800 flex items-center justify-between gap-4 shadow-sm animate-bounce">
+                <div className="flex items-center gap-3">
+                  <span className="text-2xl">⚠️</span>
+                  <p className="text-sm font-semibold">{fetchError}</p>
+                </div>
+                <button 
+                  onClick={() => {
+                    setFetchError(null);
+                    if (selectedSurah) loadSurah(selectedSurah);
+                  }}
+                  className="px-3 py-1.5 bg-rose-600 text-white text-xs font-bold rounded-lg hover:bg-rose-700 transition"
+                >
+                  Coba Lagi
+                </button>
+              </div>
+            )}
+
+            {/* VIEW 1: DAFTAR 114 SURAT */}
+            {view === 'list' && (
+              <div className="space-y-6">
+                
+                {/* DASHBOARD HERO BANNER */}
+                <div className="bg-gradient-to-r from-emerald-800 via-emerald-700 to-teal-800 rounded-3xl p-6 md:p-8 text-white shadow-xl relative overflow-hidden">
+                  <div className="absolute right-0 top-0 translate-x-8 -translate-y-8 opacity-10 pointer-events-none text-9xl">
+                    ☪
+                  </div>
+                  <div className="relative z-10 flex flex-col lg:flex-row items-center justify-between gap-6">
+                    <div className="max-w-2xl space-y-4">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="inline-block px-3 py-1 bg-gold-400/20 text-gold-300 rounded-full text-xs font-bold tracking-wider uppercase border border-gold-400/30">
+                          Ramah Anak & Dewasa
+                        </span>
+                        <span className="inline-block px-3 py-1 bg-emerald-950/60 text-emerald-200 rounded-full text-xs font-semibold border border-emerald-500/30 flex items-center gap-1.5">
+                          🏫 SDN 3 Bangunharja
+                        </span>
+                      </div>
+                      <h2 className="text-2xl md:text-3xl font-extrabold tracking-tight">
+                        Mari Hafalkan Al-Qur'an Ayat demi Ayat 🌟
+                      </h2>
+                      <p className="text-emerald-100 text-sm leading-relaxed">
+                        Dengarkan lantunan Murottal merdu, ulangi bacaan dengan mode pengulangan otomatis, dan lacak progres hafalanmu hingga 114 Surat!
+                      </p>
+
+                      {/* STATS OVERVIEW CARDS */}
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-2">
+                        <div className="bg-emerald-950/40 backdrop-blur-md border border-emerald-400/20 rounded-2xl p-3 text-center">
+                          <div className="text-xs text-emerald-200 font-medium">Total Surat</div>
+                          <div className="text-xl font-black text-gold-300">114</div>
+                        </div>
+                        <div className="bg-emerald-950/40 backdrop-blur-md border border-emerald-400/20 rounded-2xl p-3 text-center">
+                          <div className="text-xs text-emerald-200 font-medium">Surat Dihafal</div>
+                          <div className="text-xl font-black text-emerald-400">{stats.completedSurahCount} <span className="text-xs text-emerald-200 font-normal">/ 114</span></div>
+                        </div>
+                        <div className="bg-emerald-950/40 backdrop-blur-md border border-emerald-400/20 rounded-2xl p-3 text-center">
+                          <div className="text-xs text-emerald-200 font-medium">Ayat Dihafal</div>
+                          <div className="text-xl font-black text-teal-300">{stats.totalMemorizedVerses}</div>
+                        </div>
+                        <div className="bg-emerald-950/40 backdrop-blur-md border border-emerald-400/20 rounded-2xl p-3 text-center">
+                          <div className="text-xs text-emerald-200 font-medium">Progres Total</div>
+                          <div className="text-xl font-black text-gold-300">{stats.percentage}%</div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* KARTU PROFIL PEMBUAT */}
+                    <div className="w-full lg:w-auto flex-shrink-0 bg-emerald-950/60 backdrop-blur-md border border-gold-400/40 rounded-2xl p-4 flex items-center lg:flex-col gap-4 text-center shadow-xl">
+                      <div className="relative">
+                        <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full overflow-hidden border-2 border-gold-400 p-0.5 bg-gold-400/20 shadow-md">
+                          <img 
+                            src="https://iili.io/CZBdZ6x.jpg" 
+                            alt="ETI, S.Pd.SD" 
+                            className="w-full h-full object-cover rounded-full"
+                            onError={(e)=>{ e.target.onerror=null; e.target.src='https://placehold.co/100x100/065f46/ffffff?text=ETI'; }}
+                          />
+                        </div>
+                        <div className="absolute -bottom-1 -right-1 bg-gold-500 text-slate-950 rounded-full w-6 h-6 flex items-center justify-center text-xs font-extrabold shadow">
+                          ⭐
+                        </div>
+                      </div>
+                      <div className="text-left lg:text-center space-y-0.5">
+                        <div className="text-[10px] text-gold-300 font-bold uppercase tracking-wider">Pembuat & Pengembang</div>
+                        <div className="text-base font-extrabold text-white">ETI, S.Pd.SD</div>
+                        <div className="text-xs text-emerald-200 font-medium">SDN 3 Bangunharja</div>
+                        <div className="text-[10px] text-emerald-300/80">Kec. Cisaga - Kab. Ciamis</div>
+                      </div>
+                    </div>
+
+                  </div>
+                </div>
+
+                {/* SEARCH & CATEGORY FILTER */}
+                <div className="bg-white rounded-2xl p-4 shadow-md border border-slate-200/80 flex flex-col md:flex-row gap-4 justify-between items-center">
+                  {/* Search Input */}
+                  <div className="relative w-full md:w-80">
+                    <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-lg">🔍</span>
+                    <input
+                      type="text"
+                      placeholder="Cari surat (contoh: Al-Fatihah, Yasin)..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 font-medium transition"
+                    />
+                    {searchQuery && (
+                      <button 
+                        onClick={() => setSearchQuery('')}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 text-xs font-bold"
+                      >
+                        ✕
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Filter Pills */}
+                  <div className="flex flex-wrap items-center gap-1.5 w-full md:w-auto overflow-x-auto pb-1 md:pb-0">
+                    {[
+                      { id: 'all', label: 'Semua (114)' },
+                      { id: 'juz30', label: '⭐ Juz 30 (Juz Amma)' },
+                      { id: 'makkiyah', label: '🏛️ Makkiyah' },
+                      { id: 'madaniyah', label: '🕌 Madaniyah' },
+                      { id: 'completed', label: '✅ Sudah Hafal' }
+                    ].map(f => (
+                      <button
+                        key={f.id}
+                        onClick={() => setFilterCategory(f.id)}
+                        className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all ${
+                          filterCategory === f.id
+                            ? 'bg-emerald-700 text-white shadow-md'
+                            : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                        }`}
+                      >
+                        {f.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* 114 SURAH GRID CARDS */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                  {filteredSurahs.map((surah) => {
+                    const memorizedList = memorizedData[surah.number] || [];
+                    const isFullyHafal = memorizedList.length === surah.ayahCount;
+                    const percentHafal = Math.round((memorizedList.length / surah.ayahCount) * 100);
+
+                    return (
+                      <div
+                        key={surah.number}
+                        onClick={() => loadSurah(surah)}
+                        className={`group relative bg-white rounded-2xl p-4 shadow-sm hover:shadow-xl border transition-all duration-300 cursor-pointer flex flex-col justify-between overflow-hidden ${
+                          isFullyHafal 
+                            ? 'border-emerald-500 bg-emerald-50/30' 
+                            : 'border-slate-200/80 hover:border-emerald-300'
+                        }`}
+                      >
+                        {/* Top Surah Info */}
+                        <div>
+                          <div className="flex items-start justify-between gap-2 mb-3">
+                            {/* Number Octagon Frame */}
+                            <div className="relative w-10 h-10 flex items-center justify-center flex-shrink-0">
+                              <div className="absolute inset-0 bg-emerald-100 rotate-45 rounded-lg group-hover:rotate-90 group-hover:bg-gold-200 transition-all duration-500"></div>
+                              <span className="relative z-10 font-extrabold text-sm text-emerald-900 group-hover:text-slate-900">
+                                {surah.number}
+                              </span>
+                            </div>
+
+                            {/* Arabic Name */}
+                            <div className="text-right">
+                              <h3 className="arabic-text text-2xl font-bold text-slate-900 group-hover:text-emerald-700 transition-colors">
+                                {surah.name}
+                              </h3>
+                            </div>
+                          </div>
+
+                          {/* Latin & Translation */}
+                          <div className="space-y-1">
+                            <div className="flex items-center justify-between">
+                              <h4 className="font-bold text-slate-800 text-base group-hover:text-emerald-800">
+                                {surah.latin}
+                              </h4>
+                              {isFullyHafal && (
+                                <span className="text-xs bg-emerald-600 text-white px-2 py-0.5 rounded-full font-bold flex items-center gap-1 shadow-sm">
+                                  ✓ Hafal
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-xs text-slate-500 italic truncate">
+                              "{surah.translation}"
+                            </p>
+                          </div>
+                        </div>
+
+                        {/* Bottom Metadata & Progress Bar */}
+                        <div className="mt-4 pt-3 border-t border-slate-100 space-y-2">
+                          <div className="flex items-center justify-between text-[11px] text-slate-500 font-medium">
+                            <span className="flex items-center gap-1">
+                              📄 {surah.ayahCount} Ayat
+                            </span>
+                            <span className={`px-2 py-0.5 rounded-md font-semibold ${
+                              surah.type === 'Makkiyah' ? 'bg-amber-100 text-amber-800' : 'bg-emerald-100 text-emerald-800'
+                            }`}>
+                              {surah.type}
+                            </span>
+                          </div>
+
+                          {/* Hafalan Progress Bar */}
+                          <div className="space-y-1">
+                            <div className="flex justify-between text-[10px] font-bold text-slate-400">
+                              <span>Progres Hafalan</span>
+                              <span>{percentHafal}% ({memorizedList.length}/{surah.ayahCount})</span>
+                            </div>
+                            <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                              <div 
+                                className={`h-full transition-all duration-500 rounded-full ${
+                                  isFullyHafal ? 'bg-emerald-500' : 'bg-gold-500'
+                                }`} 
+                                style={{ width: `${percentHafal}%` }}
+                              ></div>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Hover Quick Action Indicator */}
+                        <div className="absolute right-3 bottom-3 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <span className="w-8 h-8 rounded-full bg-emerald-600 text-white flex items-center justify-center shadow-lg text-xs font-bold">
+                            ▶
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {filteredSurahs.length === 0 && (
+                  <div className="text-center py-16 bg-white rounded-3xl border border-dashed border-slate-300 p-8 space-y-3">
+                    <div className="text-5xl">🔍</div>
+                    <h3 className="text-lg font-bold text-slate-700">Surat Tidak Ditemukan</h3>
+                    <p className="text-sm text-slate-500">Coba kata kunci pencarian lain atau ubah filter kategorinya.</p>
+                    <button
+                      onClick={() => { setSearchQuery(''); setFilterCategory('all'); }}
+                      className="px-4 py-2 bg-emerald-700 text-white text-xs font-bold rounded-xl hover:bg-emerald-800 transition"
+                    >
+                      Tampilkan Semua 114 Surat
+                    </button>
+                  </div>
+                )}
+
+              </div>
+            )}
+
+            {/* VIEW 2: HALAMAN WORKBENCH HAFALAN SURAT */}
+            {view === 'workbench' && selectedSurah && (
+              <div className="space-y-6">
+                
+                {/* BACK & SURAH TITLE BANNER */}
+                <div className="bg-gradient-to-r from-emerald-900 via-emerald-800 to-teal-900 rounded-3xl p-6 md:p-8 text-white shadow-xl relative overflow-hidden">
+                  <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 relative z-10">
+                    
+                    <div className="space-y-2">
+                      <button
+                        onClick={() => { setView('list'); stopAudio(); }}
+                        className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-emerald-950/60 hover:bg-emerald-950 text-emerald-200 text-xs font-bold transition border border-emerald-500/20 mb-2"
+                      >
+                        ← Kembali ke Daftar Surat
+                      </button>
+                      <div className="flex items-baseline gap-3">
+                        <span className="px-3 py-1 bg-gold-500 text-slate-900 text-xs font-black rounded-lg">
+                          Surat ke-{selectedSurah.number}
+                        </span>
+                        <span className="text-xs text-emerald-200 font-medium">
+                          {selectedSurah.type} • {selectedSurah.ayahCount} Ayat
+                        </span>
+                      </div>
+                      <h2 className="text-3xl md:text-4xl font-extrabold text-gold-300">
+                        {selectedSurah.latin}
+                      </h2>
+                      <p className="text-sm text-emerald-100 italic">
+                        Arti: "{selectedSurah.translation}"
+                      </p>
+                    </div>
+
+                    <div className="text-right space-y-2 flex flex-col items-end">
+                      <h2 className="arabic-text text-4xl md:text-5xl font-extrabold text-white leading-relaxed">
+                        {selectedSurah.name}
+                      </h2>
+
+                      {/* Mark All Memorized Toggle Button */}
+                      <button
+                        onClick={() => toggleMarkAllSurahMemorized(selectedSurah.number, selectedSurah.ayahCount)}
+                        className={`mt-2 px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-md flex items-center gap-2 ${
+                          (memorizedData[selectedSurah.number] || []).length === selectedSurah.ayahCount
+                            ? 'bg-emerald-500 text-white hover:bg-emerald-600'
+                            : 'bg-gold-500 text-slate-900 hover:bg-gold-400'
+                        }`}
+                      >
+                        <span>{(memorizedData[selectedSurah.number] || []).length === selectedSurah.ayahCount ? '✓ Surat Ini Sudah Dihafal' : '⭐ Tandai Semua Ayat Hafal'}</span>
+                      </button>
+                    </div>
+
+                  </div>
+                </div>
+
+                {/* MODES & CONTROLS TOOLBAR */}
+                <div className="bg-white rounded-2xl p-4 shadow-md border border-slate-200/80 space-y-4">
+                  
+                  {/* Mode Selector Tabs */}
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                    {[
+                      { id: 'dengarkan', icon: '🎧', title: 'Mode Dengarkan', desc: 'Putar & Simak Teks' },
+                      { id: 'tirukan', icon: '🗣️', title: 'Mode Tirukan', desc: 'Dengar → Jeda Ulangi' },
+                      { id: 'hafalan', icon: '🧠', title: 'Mode Hafalan', desc: 'Tutup & Uji Teks' },
+                      { id: 'sambung', icon: '🧩', title: 'Sambung Ayat', desc: 'Kuis Tebak Ayat' }
+                    ].map(m => (
+                      <button
+                        key={m.id}
+                        onClick={() => { setMode(m.id); }}
+                        className={`p-3 rounded-xl border text-left transition-all ${
+                          mode === m.id
+                            ? 'border-emerald-600 bg-emerald-50/80 text-emerald-900 shadow-sm ring-2 ring-emerald-500/30'
+                            : 'border-slate-200 bg-slate-50/50 hover:bg-slate-100 text-slate-700'
+                        }`}
+                      >
+                        <div className="flex items-center gap-2">
+                          <span className="text-xl">{m.icon}</span>
+                          <div>
+                            <div className="font-bold text-xs sm:text-sm">{m.title}</div>
+                            <div className="text-[10px] text-slate-500 hidden sm:block">{m.desc}</div>
+                          </div>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* Secondary Preferences Bar */}
+                  <div className="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-slate-100 text-xs font-semibold text-slate-700">
+                    
+                    {/* Qari / Reciter Selector */}
+                    <div className="flex items-center gap-2">
+                      <span className="text-slate-400">🎙️ Qari:</span>
+                      <select
+                        value={reciter}
+                        onChange={(e) => handleReciterChange(e.target.value)}
+                        className="bg-slate-100 border border-slate-200 rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                      >
+                        {RECITERS.map(r => (
+                          <option key={r.id} value={r.id}>{r.name}</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    {/* Mode Hafalan Toggles */}
+                    {mode === 'hafalan' && (
+                      <div className="flex items-center gap-3 bg-amber-50 border border-amber-200 px-3 py-1.5 rounded-xl">
+                        <span className="text-amber-800 font-bold">Opsi Tutup Teks:</span>
+                        <label className="flex items-center gap-1.5 cursor-pointer text-slate-800">
+                          <input
+                            type="checkbox"
+                            checked={hideArabicText}
+                            onChange={(e) => setHideArabicText(e.target.checked)}
+                            className="rounded text-emerald-600 focus:ring-emerald-500"
+                          />
+                          <span>Sembunyikan Arab</span>
+                        </label>
+                        <label className="flex items-center gap-1.5 cursor-pointer text-slate-800">
+                          <input
+                            type="checkbox"
+                            checked={hideTranslationText}
+                            onChange={(e) => setHideTranslationText(e.target.checked)}
+                            className="rounded text-emerald-600 focus:ring-emerald-500"
+                          />
+                          <span>Sembunyikan Terjemahan</span>
+                        </label>
+                      </div>
+                    )}
+
+                    {/* Font Size Adjuster */}
+                    <div className="flex items-center gap-2">
+                      <span className="text-slate-400">Ukuran Huruf Arab:</span>
+                      <div className="flex rounded-lg overflow-hidden border border-slate-200">
+                        {['md', 'lg', 'xl', '2xl'].map((sz) => (
+                          <button
+                            key={sz}
+                            onClick={() => setFontSize(sz)}
+                            className={`px-2.5 py-1 font-bold ${
+                              fontSize === sz ? 'bg-emerald-700 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                            }`}
+                          >
+                            {sz === 'md' ? 'A' : sz === 'lg' ? 'A+' : sz === 'xl' ? 'A++' : 'A+++'}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                  </div>
+
+                </div>
+
+                {/* BISMILLAH BANNER (For all Surahs except At-Tawbah #9) */}
+                {selectedSurah.number !== 9 && (
+                  <div className="text-center py-6 px-4 bg-white rounded-2xl shadow-sm border border-slate-200/80">
+                    <p className="arabic-text text-3xl md:text-4xl font-bold text-emerald-900">
+                      بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ
+                    </p>
+                    <p className="text-xs text-slate-500 italic mt-2">
+                      "Dengan nama Allah Yang Maha Pengasih, Maha Penyayang"
+                    </p>
+                  </div>
+                )}
+
+                {/* LOADING STATE */}
+                {loadingVerses && (
+                  <div className="py-20 text-center space-y-4 bg-white rounded-2xl shadow-sm">
+                    <div className="inline-block w-12 h-12 border-4 border-emerald-600 border-t-transparent rounded-full animate-spin"></div>
+                    <p className="font-bold text-slate-700">Memuat teks Arab & Audio Murottal merdu...</p>
+                    <p className="text-xs text-slate-400">Menghubungkan ke server audio Al-Qur'an terpercaya</p>
+                  </div>
+                )}
+
+                {/* MODE 4: KUIS SAMBUNG AYAT */}
+                {mode === 'sambung' && !loadingVerses && verses.length > 1 && (
+                  <div className="bg-white rounded-3xl p-6 md:p-8 shadow-md border border-slate-200 space-y-6">
+                    <div className="flex items-center justify-between border-b pb-4">
+                      <div>
+                        <h3 className="text-lg font-bold text-slate-800">🧩 Mode Sambung Ayat (Kuis Hafalan)</h3>
+                        <p className="text-xs text-slate-500">Simak atau baca ayat berikut, lalu pilih sambungan ayat yang benar!</p>
+                      </div>
+                      <div className="bg-gold-100 border border-gold-300 text-gold-900 px-4 py-1.5 rounded-2xl font-black text-sm">
+                        Skor Kamu: {quizScore}
+                      </div>
+                    </div>
+
+                    {/* Question Verse Display */}
+                    <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-6 space-y-4 text-center">
+                      <span className="inline-block px-3 py-1 bg-emerald-700 text-white rounded-full text-xs font-bold">
+                        Ayat Soal (Ayat {verses[quizIndex]?.numberInSurah})
+                      </span>
+
+                      <div className="arabic-text text-3xl font-bold text-slate-900 leading-relaxed">
+                        {verses[quizIndex]?.text}
+                      </div>
+
+                      <div className="pt-2">
+                        <button
+                          onClick={() => playAyah(quizIndex)}
+                          className="px-4 py-2 bg-emerald-600 text-white rounded-xl text-xs font-bold hover:bg-emerald-700 shadow-md inline-flex items-center gap-2"
+                        >
+                          <span>🔊</span> Dengarkan Suara Ayat Ini
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Answer Feedback Toast */}
+                    {quizAnswerFeedback && (
+                      <div className={`p-4 rounded-xl text-center font-bold text-sm ${
+                        quizAnswerFeedback === 'correct'
+                          ? 'bg-emerald-600 text-white shadow-lg animate-pulse'
+                          : 'bg-rose-500 text-white'
+                      }`}>
+                        {quizAnswerFeedback === 'correct' ? '🎉 Masya Allah! Jawabanmu BENAR! (+10 Skor)' : '❌ Masih Kurang Tepat, Coba Pilih Lagi!'}
+                      </div>
+                    )}
+
+                    {/* Multiple Choice Options */}
+                    <div className="space-y-3">
+                      <p className="text-xs font-bold text-slate-600 uppercase tracking-wider">
+                        Pilih Ayat Selanjutnya yang Tepat:
+                      </p>
+                      <div className="grid grid-cols-1 gap-3">
+                        {quizOptions.map((opt, idx) => (
+                          <button
+                            key={idx}
+                            onClick={() => handleAnswerQuiz(opt)}
+                            className="p-4 rounded-2xl border-2 border-slate-200 hover:border-emerald-500 hover:bg-emerald-50/50 text-right transition-all font-semibold space-y-2 group"
+                          >
+                            <div className="arabic-text text-2xl text-slate-800 group-hover:text-emerald-900">
+                              {opt.text}
+                            </div>
+                            <div className="text-xs text-slate-400 group-hover:text-slate-600 text-left italic">
+                              "{opt.translation}"
+                            </div>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                  </div>
+                )}
+
+                {/* LIST AYAT (MODES: DENGARKAN, TIRUKAN, HAFALAN) */}
+                {mode !== 'sambung' && !loadingVerses && (
+                  <div className="space-y-4">
+                    
+                    {/* COUNTDOWN BANNER (FOR MODE TIRUKAN) */}
+                    {isPauseCountdown && (
+                      <div className="sticky top-20 z-30 bg-amber-500 text-slate-900 rounded-2xl p-4 shadow-xl border-2 border-gold-300 flex items-center justify-between animate-pulse">
+                        <div className="flex items-center gap-3">
+                          <span className="text-3xl">🗣️</span>
+                          <div>
+                            <h4 className="font-extrabold text-base">Giliranmu Menirukan Bacaan Ayat Ini!</h4>
+                            <p className="text-xs font-medium">Bicara dan ulangi bacaan secara bebas sebelum ayat berikutnya diputar...</p>
+                          </div>
+                        </div>
+                        <div className="w-12 h-12 rounded-full bg-slate-900 text-gold-300 flex items-center justify-center font-black text-xl shadow-inner">
+                          {countdownSeconds}s
+                        </div>
+                      </div>
+                    )}
+
+                    {verses.map((ayah, index) => {
+                      const isActive = currentAyahIndex === index && (isPlaying || isPauseCountdown);
+                      const isMemorized = (memorizedData[selectedSurah.number] || []).includes(ayah.numberInSurah);
+
+                      const isArabicHidden = (mode === 'hafalan' && hideArabicText && !revealedAyahs[ayah.numberInSurah]);
+                      const isTranslationHidden = (mode === 'hafalan' && hideTranslationText && !revealedAyahs[ayah.numberInSurah]);
+
+                      // Dynamic Font Size
+                      const fontClass = fontSize === 'md' ? 'text-2xl' : fontSize === 'lg' ? 'text-3xl md:text-4xl' : fontSize === 'xl' ? 'text-4xl md:text-5xl' : 'text-5xl md:text-6xl';
+
+                      return (
+                        <div
+                          id={`ayah-card-${index}`}
+                          key={ayah.numberInSurah}
+                          className={`bg-white rounded-3xl p-5 md:p-7 shadow-sm border transition-all duration-300 space-y-4 ${
+                            isActive 
+                              ? 'active-ayah-card border-gold-500 ring-2 ring-gold-400/50' 
+                              : isMemorized
+                                ? 'border-emerald-300/80 bg-emerald-50/20'
+                                : 'border-slate-200/80 hover:border-slate-300'
+                          }`}
+                        >
+                          {/* AYAH HEADER BAR */}
+                          <div className="flex items-center justify-between gap-2 pb-3 border-b border-slate-100">
+                            
+                            {/* Left Controls */}
+                            <div className="flex items-center gap-2">
+                              {/* Ayah Number Badge */}
+                              <div className={`w-9 h-9 rounded-xl flex items-center justify-center font-black text-xs ${
+                                isActive ? 'bg-gold-500 text-slate-900 shadow-md' : 'bg-slate-100 text-slate-700'
+                              }`}>
+                                {ayah.numberInSurah}
+                              </div>
+
+                              {/* Play Button */}
+                              <button
+                                onClick={() => playAyah(index)}
+                                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 ${
+                                  isActive && isPlaying
+                                    ? 'bg-rose-600 text-white shadow-md'
+                                    : 'bg-emerald-700 text-white hover:bg-emerald-800 shadow-sm'
+                                }`}
+                              >
+                                <span>{isActive && isPlaying ? '⏸ Jeda' : '▶ Putar'}</span>
+                              </button>
+
+                              {/* Active Pulse Animation */}
+                              {isActive && (
+                                <span className="flex h-3 w-3 relative">
+                                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-gold-400 opacity-75"></span>
+                                  <span className="relative inline-flex rounded-full h-3 w-3 bg-gold-500"></span>
+                                </span>
+                              )}
+                            </div>
+
+                            {/* Right Controls (Memorized Checkbox) */}
+                            <div className="flex items-center gap-3">
+                              {mode === 'hafalan' && (isArabicHidden || isTranslationHidden) && (
+                                <button
+                                  onClick={() => {
+                                    setRevealedAyahs(prev => ({
+                                      ...prev,
+                                      [ayah.numberInSurah]: !prev[ayah.numberInSurah]
+                                    }));
+                                  }}
+                                  className="px-2.5 py-1 bg-amber-100 hover:bg-amber-200 text-amber-900 rounded-lg text-xs font-bold transition"
+                                >
+                                  👁️ {revealedAyahs[ayah.numberInSurah] ? 'Sembunyikan' : 'Buka Teks'}
+                                </button>
+                              )}
+
+                              <button
+                                onClick={() => toggleAyahMemorized(selectedSurah.number, ayah.numberInSurah)}
+                                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 border ${
+                                  isMemorized
+                                    ? 'bg-emerald-600 text-white border-emerald-600 shadow-sm'
+                                    : 'bg-white text-slate-600 border-slate-300 hover:border-emerald-500'
+                                }`}
+                              >
+                                <span>{isMemorized ? '✓ Sudah Hafal' : '○ Tandai Hafal'}</span>
+                              </button>
+                            </div>
+
+                          </div>
+
+                          {/* ARABIC TEXT */}
+                          <div className="py-2">
+                            <p 
+                              className={`arabic-text font-bold text-slate-900 leading-loose text-right transition-all ${fontClass} ${
+                                isArabicHidden ? 'text-hidden-blur select-none' : ''
+                              }`}
+                            >
+                              {ayah.text}
+                              <span className="inline-block mx-2 text-emerald-600 font-normal text-2xl">
+                                ۝{ayah.numberInSurah}
+                              </span>
+                            </p>
+                          </div>
+
+                          {/* INDONESIAN TRANSLATION */}
+                          <div className="pt-2 border-t border-slate-100">
+                            <p className={`text-sm text-slate-600 leading-relaxed ${
+                              isTranslationHidden ? 'text-hidden-blur select-none' : ''
+                            }`}>
+                              <span className="font-semibold text-slate-400 mr-2">{ayah.numberInSurah}.</span>
+                              {ayah.translation}
+                            </p>
+                          </div>
+
+                        </div>
+                      );
+                    })}
+
+                  </div>
+                )}
+
+              </div>
+            )}
+
+            {/* VIEW 3: PROGRESS & BADGES DASHBOARD */}
+            {view === 'progress' && (
+              <div className="space-y-6">
+                
+                {/* HERO STATS */}
+                <div className="bg-gradient-to-r from-emerald-800 to-teal-900 text-white rounded-3xl p-6 md:p-8 shadow-xl space-y-6">
+                  <div className="space-y-1">
+                    <span className="px-3 py-1 bg-gold-400/20 text-gold-300 rounded-full text-xs font-bold uppercase tracking-wider">
+                      Laporan Perkembangan
+                    </span>
+                    <h2 className="text-3xl font-extrabold text-white">Ringkasan Hafalan Al-Qur'an Anda</h2>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div className="bg-emerald-950/40 border border-emerald-400/20 rounded-2xl p-5 text-center space-y-1">
+                      <div className="text-3xl">🕌</div>
+                      <div className="text-2xl font-black text-gold-300">{stats.completedSurahCount} / 114</div>
+                      <div className="text-xs text-emerald-200">Surat Selesai Dihafal</div>
+                    </div>
+                    <div className="bg-emerald-950/40 border border-emerald-400/20 rounded-2xl p-5 text-center space-y-1">
+                      <div className="text-3xl">📖</div>
+                      <div className="text-2xl font-black text-emerald-400">{stats.totalMemorizedVerses} / {stats.totalQuranVerses}</div>
+                      <div className="text-xs text-emerald-200">Ayat Selesai Dihafal</div>
+                    </div>
+                    <div className="bg-emerald-950/40 border border-emerald-400/20 rounded-2xl p-5 text-center space-y-1">
+                      <div className="text-3xl">📊</div>
+                      <div className="text-2xl font-black text-teal-300">{stats.percentage}%</div>
+                      <div className="text-xs text-emerald-200">Persentase Total Al-Qur'an</div>
+                    </div>
+                  </div>
+
+                  {/* Progress Bar */}
+                  <div className="space-y-2">
+                    <div className="flex justify-between text-xs font-bold text-emerald-200">
+                      <span>Progres Keseluruhan 114 Surat</span>
+                      <span>{stats.percentage}%</span>
+                    </div>
+                    <div className="w-full h-3 bg-emerald-950/60 rounded-full overflow-hidden p-0.5 border border-emerald-400/30">
+                      <div 
+                        className="h-full bg-gradient-to-r from-gold-400 to-amber-500 rounded-full transition-all duration-700 shadow-md"
+                        style={{ width: `${stats.percentage}%` }}
+                      ></div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* ACHIEVEMENTS / LENCANA PRESTASI */}
+                <div className="bg-white rounded-3xl p-6 shadow-md border border-slate-200 space-y-4">
+                  <h3 className="text-lg font-bold text-slate-800 flex items-center gap-2">
+                    <span>🏆</span> Lencana Pencapaian Hafalan
+                  </h3>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                    {[
+                      {
+                        title: "Hafiz Al-Fatihah",
+                        desc: "Menghafal Surat Al-Fatihah",
+                        icon: "🥇",
+                        unlocked: (memorizedData[1] || []).length === 7
+                      },
+                      {
+                        title: "Bintang Juz 'Amma",
+                        desc: "Menghafal 5 Surat Juz 30",
+                        icon: "🌟",
+                        unlocked: ALL_114_SURAHS.filter(s => s.number >= 78 && (memorizedData[s.number] || []).length === s.ayahCount).length >= 5
+                      },
+                      {
+                        title: "Pejuang Hafalan",
+                        desc: "Menghafal lebih dari 50 Ayat",
+                        icon: "⚔️",
+                        unlocked: stats.totalMemorizedVerses >= 50
+                      },
+                      {
+                        title: "Hafiz 10 Surat",
+                        desc: "Menghafal 10 Surat Lengkap",
+                        icon: "👑",
+                        unlocked: stats.completedSurahCount >= 10
+                      }
+                    ].map((badge, idx) => (
+                      <div
+                        key={idx}
+                        className={`p-4 rounded-2xl border text-center space-y-2 transition-all ${
+                          badge.unlocked
+                            ? 'bg-amber-50/60 border-amber-300 shadow-sm'
+                            : 'bg-slate-50 border-slate-200 opacity-50 grayscale'
+                        }`}
+                      >
+                        <div className="text-4xl">{badge.icon}</div>
+                        <h4 className="font-bold text-slate-800 text-sm">{badge.title}</h4>
+                        <p className="text-[11px] text-slate-500">{badge.desc}</p>
+                        <span className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                          badge.unlocked ? 'bg-amber-500 text-slate-900' : 'bg-slate-200 text-slate-600'
+                        }`}>
+                          {badge.unlocked ? '✓ Terbuka' : 'Terkunci'}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* COMPLETED SURAHS DETAILED BREAKDOWN */}
+                <div className="bg-white rounded-3xl p-6 shadow-md border border-slate-200 space-y-4">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-lg font-bold text-slate-800">Daftar Surat Selesai Dihafal</h3>
+                    {stats.completedSurahCount > 0 && (
+                      <button
+                        onClick={() => {
+                          if (window.confirm("Apakah Anda yakin ingin menghapus semua catatan progres hafalan?")) {
+                            setMemorizedData({});
+                          }
+                        }}
+                        className="text-xs text-rose-600 hover:underline font-bold"
+                      >
+                        Reset Semua Progres
+                      </button>
+                    )}
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+                    {ALL_114_SURAHS.filter(s => (memorizedData[s.number] || []).length > 0).map(s => {
+                      const list = memorizedData[s.number] || [];
+                      const isComplete = list.length === s.ayahCount;
+                      return (
+                        <div key={s.number} className="p-3 bg-slate-50 border border-slate-200 rounded-2xl flex items-center justify-between">
+                          <div>
+                            <div className="font-bold text-slate-800 text-sm">{s.latin}</div>
+                            <div className="text-xs text-slate-500">{list.length} / {s.ayahCount} Ayat</div>
+                          </div>
+                          <span className={`px-2 py-1 rounded-lg text-xs font-bold ${
+                            isComplete ? 'bg-emerald-600 text-white' : 'bg-amber-100 text-amber-800'
+                          }`}>
+                            {isComplete ? 'Selesai ✓' : 'Progres'}
+                          </span>
+                        </div>
+                      );
+                    })}
+
+                    {Object.keys(memorizedData).length === 0 && (
+                      <div className="col-span-full text-center py-8 text-slate-400 text-sm italic">
+                        Belum ada ayat yang ditandai sebagai hafal. Buka surat dan tandai ayat yang telah kamu kuasai!
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+              </div>
+            )}
+
+          </main>
+
+          {/* FLOATING AUDIO CONTROL PLAYER (ALWAYS ACTIVE WHEN SURAH WORKBENCH OPEN) */}
+          {view === 'workbench' && selectedSurah && (
+            <div className="fixed bottom-0 left-0 right-0 z-50 bg-slate-900/95 backdrop-blur-md text-white border-t border-emerald-500/30 px-4 py-3 shadow-2xl">
+              <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-3">
+                
+                {/* Active Ayah & Surah Label */}
+                <div className="flex items-center gap-3 w-full md:w-auto justify-between md:justify-start">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-emerald-700 text-gold-300 flex items-center justify-center font-extrabold text-sm shadow-md">
+                      {verses[currentAyahIndex]?.numberInSurah || 1}
+                    </div>
+                    <div>
+                      <div className="font-bold text-sm text-gold-300">
+                        {selectedSurah.latin} : Ayat {verses[currentAyahIndex]?.numberInSurah || 1}
+                      </div>
+                      <div className="text-[11px] text-slate-400 flex items-center gap-2">
+                        <span>Mode: <strong className="text-emerald-400 uppercase">{mode}</strong></span>
+                        <span>•</span>
+                        <span>Ulang: <strong className="text-gold-400">{repeatTarget}x</strong> ({currentRepeatCount}/{repeatTarget})</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Mobile Quick Play/Pause */}
+                  <div className="flex md:hidden items-center gap-2">
+                    <button
+                      onClick={togglePlayPause}
+                      className="w-10 h-10 rounded-full bg-gold-500 text-slate-900 flex items-center justify-center font-extrabold shadow-lg"
+                    >
+                      {isPlaying ? '⏸' : '▶'}
+                    </button>
+                  </div>
+                </div>
+
+                {/* Primary Player Buttons */}
+                <div className="flex items-center gap-3 w-full md:w-auto justify-center">
+                  
+                  {/* Prev Ayah */}
+                  <button
+                    onClick={() => {
+                      if (currentAyahIndex > 0) playAyah(currentAyahIndex - 1);
+                    }}
+                    disabled={currentAyahIndex === 0}
+                    className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 disabled:opacity-30 text-white text-sm"
+                    title="Ayat Sebelumnya"
+                  >
+                    ⏮
+                  </button>
+
+                  {/* Play / Pause */}
+                  <button
+                    onClick={togglePlayPause}
+                    className="px-6 py-2.5 bg-gradient-to-r from-gold-500 to-amber-400 text-slate-950 font-black rounded-2xl shadow-lg hover:scale-105 transition flex items-center gap-2 text-sm"
+                  >
+                    <span>{isPlaying ? '⏸ JEDA' : '▶ PUTAR'}</span>
+                  </button>
+
+                  {/* Stop */}
+                  <button
+                    onClick={stopAudio}
+                    className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-rose-400 text-sm"
+                    title="Hentikan Audio"
+                  >
+                    ⏹
+                  </button>
+
+                  {/* Next Ayah */}
+                  <button
+                    onClick={() => {
+                      if (currentAyahIndex < verses.length - 1) playAyah(currentAyahIndex + 1);
+                    }}
+                    disabled={currentAyahIndex === verses.length - 1}
+                    className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 disabled:opacity-30 text-white text-sm"
+                    title="Ayat Selanjutnya"
+                  >
+                    ⏭
+                  </button>
+
+                </div>
+
+                {/* Audio Customization Controls */}
+                <div className="flex items-center gap-3 w-full md:w-auto justify-between md:justify-end text-xs">
+                  
+                  {/* Ayah Repeat Selector */}
+                  <div className="flex items-center gap-1.5 bg-slate-800 px-2.5 py-1.5 rounded-xl border border-slate-700">
+                    <span className="text-slate-400">Ulangi:</span>
+                    {[1, 3, 5, 10].map(cnt => (
+                      <button
+                        key={cnt}
+                        onClick={() => setRepeatTarget(cnt)}
+                        className={`px-2 py-0.5 rounded-md font-bold transition ${
+                          repeatTarget === cnt ? 'bg-gold-500 text-slate-900' : 'text-slate-300 hover:bg-slate-700'
+                        }`}
+                      >
+                        {cnt}x
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* Playback Speed */}
+                  <div className="flex items-center gap-1.5 bg-slate-800 px-2.5 py-1.5 rounded-xl border border-slate-700">
+                    <span className="text-slate-400">Laju:</span>
+                    <select
+                      value={playbackSpeed}
+                      onChange={(e) => setPlaybackSpeed(parseFloat(e.target.value))}
+                      className="bg-transparent text-gold-300 font-bold focus:outline-none"
+                    >
+                      <option value="0.75" className="bg-slate-900 text-white">0.75x (Pelan)</option>
+                      <option value="1" className="bg-slate-900 text-white">1.0x (Normal)</option>
+                      <option value="1.25" className="bg-slate-900 text-white">1.25x (Cepat)</option>
+                      <option value="1.5" className="bg-slate-900 text-white">1.5x (Kilat)</option>
+                    </select>
+                  </div>
+
+                </div>
+
+              </div>
+            </div>
+          )}
+
+          {/* FOOTER */}
+          <footer className="bg-slate-900 text-slate-400 py-6 text-center text-xs border-t border-slate-800">
+            <div className="max-w-7xl mx-auto px-4 space-y-4">
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-4 text-slate-300">
+                <img 
+                  src="https://iili.io/nokHlP1.png" 
+                  alt="SDN 3 Bangunharja" 
+                  className="w-10 h-10 object-contain rounded-lg border border-slate-700 p-0.5 bg-white"
+                  onError={(e)=>{ e.target.onerror=null; e.target.src='https://placehold.co/100x100/064e3b/facc15?text=SDN3'; }} 
+                />
+                <div className="text-center sm:text-left">
+                  <div className="font-bold text-slate-200 text-sm">SDN 3 BANGUNHARJA</div>
+                  <div className="text-[11px] text-slate-400">Kecamatan Cisaga, Kabupaten Ciamis</div>
+                </div>
+                <div className="hidden sm:block h-8 w-px bg-slate-700 mx-2"></div>
+                <div className="flex items-center gap-2">
+                  <img 
+                    src="https://iili.io/CZBdZ6x.jpg" 
+                    alt="ETI, S.Pd.SD" 
+                    className="w-8 h-8 rounded-full object-cover border border-gold-400"
+                    onError={(e)=>{ e.target.onerror=null; e.target.src='https://placehold.co/100x100/065f46/ffffff?text=ETI'; }} 
+                  />
+                  <div className="text-left">
+                    <div className="font-bold text-gold-300 text-xs">ETI, S.Pd.SD</div>
+                    <div className="text-[10px] text-slate-400">Penyusun & Pengembang Aplikasi</div>
+                  </div>
+                </div>
+              </div>
+              <p className="font-semibold text-slate-400">
+                Hafalan 114 Surat Al-Qur'an — Belajar, Mendengarkan, & Menghafal Interaktif
+              </p>
+              <p className="text-slate-500 text-[11px]">
+                Audio Murottal disediakan secara resmi dari server Al-Qur'an Cloud & EverydayQuran.
+              </p>
+            </div>
+          </footer>
+
+        </div>
+      );
+    }
+
+    // Render React Application
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<App />);
+  </script>
+</body>
+</html>
